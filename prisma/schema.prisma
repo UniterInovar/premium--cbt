@@ -1,0 +1,151 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ExamType {
+  id              String           @id @default(cuid())
+  name            String           @unique // JAMB, WAEC, NECO
+  subjects        Subject[]
+  questions       Question[]
+  theoryQuestions TheoryQuestion[]
+}
+
+model Subject {
+  id              String           @id @default(cuid())
+  name            String           // Mathematics, English
+  examTypeId      String
+  examType        ExamType         @relation(fields: [examTypeId], references: [id])
+  topics          Topic[]
+  questions       Question[]
+  theoryQuestions TheoryQuestion[]
+
+  @@unique([name, examTypeId])
+}
+
+model Topic {
+  id              String           @id @default(cuid())
+  name            String
+  subjectId       String
+  subject         Subject          @relation(fields: [subjectId], references: [id])
+  questions       Question[]
+  theoryQuestions TheoryQuestion[]
+
+  @@unique([name, subjectId])
+}
+
+// Removed unsupported enums and Json for SQLite compatibility
+model Question {
+  id            String   @id @default(cuid())
+  text          String
+  // Use plain strings for type; values should be one of "THEORY", "MCQ"
+  type          String
+  year          Int
+  // Store MCQ options as a JSON string; will be parsed at runtime
+  options       String?   // JSON string for MCQ options
+  correctAnswer String?   // Correct answer for MCQ
+  explanation   String?
+  examTypeId    String
+  examType      ExamType @relation(fields: [examTypeId], references: [id])
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id])
+  topicId       String?
+  topic         Topic?   @relation(fields: [topicId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TheoryQuestion {
+  id            String   @id @default(cuid())
+  text          String
+  section       String?  // e.g. "Section A", "Section B"
+  year          Int
+  sampleAnswer  String?  // Model answer, marking scheme or explanation
+  sourceUrl     String?  // Scraped original source link
+  examTypeId    String
+  examType      ExamType @relation(fields: [examTypeId], references: [id])
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id])
+  topicId       String?
+  topic         Topic?   @relation(fields: [topicId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String?       @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  role          String        @default("USER")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  examHistories ExamHistory[]
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}
+
+model ExamHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examType  String   // e.g., JAMB, WAEC
+  subjects  String   // Comma separated list of subjects
+  score     Int
+  total     Int
+  timeTaken Int      // In seconds
+  createdAt DateTime @default(now())
+}

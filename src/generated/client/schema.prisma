@@ -1,0 +1,82 @@
+// This is your Prisma schema file
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+  output     = "../src/generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model ExamType {
+  id        String     @id @default(cuid())
+  name      String     @unique // JAMB, WAEC, NECO
+  subjects  Subject[]
+  questions Question[]
+}
+
+model Subject {
+  id         String     @id @default(cuid())
+  name       String // Mathematics, English
+  examTypeId String
+  examType   ExamType   @relation(fields: [examTypeId], references: [id])
+  topics     Topic[]
+  questions  Question[]
+
+  @@unique([name, examTypeId])
+}
+
+model Topic {
+  id        String     @id @default(cuid())
+  name      String
+  subjectId String
+  subject   Subject    @relation(fields: [subjectId], references: [id])
+  questions Question[]
+
+  @@unique([name, subjectId])
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  text          String
+  type          String // Objective, Theory, Practical
+  year          Int
+  options       String? // JSON string array for objectives
+  correctAnswer String? // For objectives
+  explanation   String?
+  examTypeId    String
+  examType      ExamType @relation(fields: [examTypeId], references: [id])
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id])
+  topicId       String?
+  topic         Topic?   @relation(fields: [topicId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String?       @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  role          String        @default("USER")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  examHistories ExamHistory[]
+}
+
+model ExamHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examType  String // e.g., JAMB, WAEC
+  subjects  String // Comma separated list of subjects
+  score     Int
+  total     Int
+  timeTaken Int // In seconds
+  createdAt DateTime @default(now())
+}
