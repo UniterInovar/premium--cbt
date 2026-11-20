@@ -72,6 +72,7 @@ export default function AdminDashboard() {
              <button className="btn btn-primary" onClick={() => router.push('/admin/add-question')}>Add New Question</button>
              <button className="btn btn-primary" style={{ background: 'var(--accent-color)' }} onClick={() => router.push('/admin/scraper')}>🚀 Scrape from Myschool</button>
              <button className="btn btn-secondary" onClick={() => router.push('/admin/questions')}>Browse Question Bank</button>
+             <button className="btn btn-secondary" onClick={() => router.push('/admin/export')}>📄 Export Questions (.docx)</button>
           </div>
         </div>
 
