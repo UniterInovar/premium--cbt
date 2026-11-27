@@ -12,3 +12,7 @@ services:
         value: "file:./dev.db"
       - key: NEXTAUTH_SECRET
         generateValue: true
+      - key: EMAIL_SERVER
+        value: "smtp://your_smtp_user:your_smtp_password@smtp.example.com:587"
+      - key: EMAIL_FROM
+        value: "PrepElite Support <support@prepelite.com>"
